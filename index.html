@@ -3,129 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PhotoGuessr Retro</title>
+    <title>PhotoGuessr</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a1a; color: #eee; text-align: center; margin: 0; padding: 10px; }
-        #game-container { max-width: 500px; margin: 20px auto; background: #2d2d2d; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .img-wrapper { width: 100%; height: 300px; display: flex; align-items: center; justify-content: center; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-        img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
-        .loader { border: 4px solid #444; border-top: 4px solid #ffcc00; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        input[type=range] { width: 100%; height: 15px; border-radius: 5px; background: #444; outline: none; -webkit-appearance: none; margin: 25px 0; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; border-radius: 50%; background: #ffcc00; cursor: pointer; border: 3px solid #1a1a1a; }
-        button { background: #ffcc00; border: none; padding: 12px 30px; color: #1a1a1a; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 18px; transition: 0.2s; }
+        :root { --primary: #ffcc00; --bg: #121212; --card: #252525; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; text-align: center; margin: 0; }
+        #app { max-width: 500px; margin: auto; padding: 20px; }
+        
+        /* Menus */
+        .screen { display: none; }
+        .active { display: block; }
+        .card { background: var(--card); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        h1 { color: var(--primary); font-size: 2.5em; margin-bottom: 10px; }
+        button { background: var(--primary); border: none; padding: 15px 30px; color: #000; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1.1em; width: 100%; margin: 10px 0; transition: 0.2s; }
         button:active { transform: scale(0.95); }
-        #result { margin-top: 20px; font-size: 1.2em; line-height: 1.4; }
-        .score-val { color: #ffcc00; font-size: 1.5em; display: block; }
+        button.secondary { background: #444; color: white; }
+
+        /* Game */
+        .img-box { width: 100%; height: 300px; background: #000; border-radius: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 15px 0; border: 2px solid #333; }
+        img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        input[type=range] { width: 100%; height: 15px; margin: 20px 0; accent-color: var(--primary); cursor: pointer; }
+        .year-text { font-size: 2.5em; font-weight: bold; color: var(--primary); margin: 10px 0; }
+        
+        .pin-box { font-size: 2em; letter-spacing: 5px; color: var(--primary); background: #000; padding: 10px; border-radius: 10px; margin: 20px 0; }
+        .toggle-box { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px 20px; border-radius: 10px; margin-top: 10px; }
+
+        .loader { border: 4px solid #444; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <h1 style="color: #ffcc00; margin-top: 0;">PhotoGuessr</h1>
-    
-    <div class="img-wrapper">
-        <div id="loader" class="loader"></div>
-        <img id="photo" src="" alt="Photo historique">
-    </div>
-    
-    <div id="controls" style="display:none;">
-        <p>Année : <b id="year-display" style="font-size: 2em; color: #ffcc00;">1950</b></p>
-        <input type="range" id="year-slider" min="1840" max="2024" value="1950">
-        <br>
-        <button onclick="checkAnswer()">VALIDER</button>
+<div id="app">
+    <div id="menu" class="screen active">
+        <div class="card">
+            <h1>PHOTOGUESSR</h1>
+            <button onclick="startSolo()">PARTIE SOLO</button>
+            <button onclick="showMulti()">PARTIE MULTIJOUEUR</button>
+            <div class="toggle-box">
+                <span>Vibrations</span>
+                <input type="checkbox" id="vibrate-toggle" checked>
+            </div>
+        </div>
     </div>
 
-    <div id="result"></div>
-    <button id="next-btn" style="display:none; margin-top: 15px; background: #eee;" onclick="startGame()">IMAGE SUIVANTE</button>
+    <div id="multi-lobby" class="screen">
+        <div class="card">
+            <h2>SALON PRIVÉ</h2>
+            <p>Partage ce code avec tes amis :</p>
+            <div id="pin-display" class="pin-box">0000</div>
+            <p style="font-size: 0.8em; color: #888;">(Simulation de salon multi)</p>
+            <button onclick="startSolo()">LANCER LA PARTIE</button>
+            <button class="secondary" onclick="goHome()">RETOUR</button>
+        </div>
+    </div>
+
+    <div id="game" class="screen">
+        <div class="card">
+            <div class="img-box">
+                <div id="loader" class="loader"></div>
+                <img id="photo" src="">
+            </div>
+            
+            <div id="game-ui">
+                <div class="year-text" id="year-val">1940</div>
+                <input type="range" id="slider" min="1860" max="2010" value="1940">
+                <button onclick="validate()">VALIDER</button>
+            </div>
+
+            <div id="result-ui" style="display:none">
+                <h2 id="result-title">SCORE</h2>
+                <p id="result-info"></p>
+                <button onclick="startSolo()">SUIVANT</button>
+                <button class="secondary" onclick="goHome()">QUITTER</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     let correctYear = 0;
-    const photoImg = document.getElementById('photo');
-    const loader = document.getElementById('loader');
-    const controls = document.getElementById('controls');
-    const yearDisplay = document.getElementById('year-display');
-    const yearSlider = document.getElementById('year-slider');
-    const resultDiv = document.getElementById('result');
-    const nextBtn = document.getElementById('next-btn');
+    let vibrateEnabled = true;
 
-    // Retour haptique et mise à jour affichage
-    yearSlider.oninput = function() {
-        yearDisplay.innerText = this.value;
-        if (window.navigator.vibrate) {
-            window.navigator.vibrate(10); // Petit "tic" sur mobile
+    // Navigation
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function goHome() { showScreen('menu'); }
+
+    function showMulti() {
+        const pin = Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('pin-display').innerText = pin;
+        showScreen('multi-lobby');
+    }
+
+    // Gestion Slider et Vibration
+    const slider = document.getElementById('slider');
+    slider.oninput = function() {
+        document.getElementById('year-val').innerText = this.value;
+        vibrateEnabled = document.getElementById('vibrate-toggle').checked;
+        if (vibrateEnabled && window.navigator.vibrate) {
+            window.navigator.vibrate(8); 
         }
     };
 
-    async function startGame() {
-        resultDiv.innerHTML = "";
-        nextBtn.style.display = "none";
-        controls.style.display = "none";
-        photoImg.style.display = "none";
-        loader.style.display = "block";
+    // Jeu
+    async function startSolo() {
+        showScreen('game');
+        document.getElementById('game-ui').style.display = 'block';
+        document.getElementById('result-ui').style.display = 'none';
+        document.getElementById('photo').style.display = 'none';
+        document.getElementById('loader').style.display = 'block';
 
         try {
-            // On cherche des images avec des mots clés "History" ou "Archive" pour plus de pertinence
-            const searchTerms = ['History', 'Archive', 'Old+photo', 'Vintage'];
-            const term = searchTerms[Math.floor(Math.random() * searchTerms.length)];
+            // Requête ciblée sur des archives anciennes (Noir et blanc / Vintage)
+            const queries = ['19th-century+photographs', 'Vintage+photograph', 'Black+and+white+photograph+archive'];
+            const q = queries[Math.floor(Math.random() * queries.length)];
             
-            const response = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=random&grnnamespace=6&prop=imageinfo&iiprop=url|timestamp|extmetadata&iiurlwidth=800&q=${term}`);
+            const response = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=random&grnnamespace=6&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=800&q=${q}`);
             const data = await response.json();
             const page = Object.values(data.query.pages)[0];
             const info = page.imageinfo[0];
             
-            // Extraction de l'année
-            let dateVal = "";
-            if(info.extmetadata.DateTimeOriginal) dateVal = info.extmetadata.DateTimeOriginal.value;
-            else if(info.extmetadata.DateTime) dateVal = info.extmetadata.DateTime.value;
-            else dateVal = info.timestamp;
-
-            let match = dateVal.match(/\d{4}/);
-
-            // Filtre : on veut des vraies dates cohérentes
-            if (!match || match[0] < 1840 || match[0] > 2025) {
-                startGame();
-                return;
-            }
+            let dateStr = info.extmetadata.DateTimeOriginal ? info.extmetadata.DateTimeOriginal.value : "2020";
+            let match = dateStr.match(/\d{4}/);
+            
+            // Si l'image est trop récente ou sans date, on relance
+            if (!match || match[0] > 2015 || match[0] < 1850) return startSolo();
 
             correctYear = parseInt(match[0]);
-            photoImg.src = info.url;
-            
-            photoImg.onload = () => {
-                loader.style.display = "none";
-                photoImg.style.display = "block";
-                controls.style.display = "block";
+            document.getElementById('photo').src = info.url;
+            document.getElementById('photo').onload = () => {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('photo').style.display = 'block';
             };
-
-        } catch (e) {
-            startGame();
-        }
+        } catch(e) { startSolo(); }
     }
 
-    function checkAnswer() {
-        const guess = parseInt(yearSlider.value);
+    function validate() {
+        const guess = parseInt(slider.value);
         const diff = Math.abs(guess - correctYear);
         
-        // Nouveau calcul de score plus équilibré
-        // 5000 points max, on perd des points selon l'écart
-        let score = Math.max(0, 5000 - (diff * diff * 5)); 
-        if (diff > 30) score = Math.max(0, 1000 - (diff * 10)); // Sécurité pour les gros écarts
+        // Système de score plus facile (1000 pts max)
+        let score = Math.max(0, 1000 - (diff * 15));
+        if (diff <= 2) score = 1000; // Bonus presque parfait
 
-        if (window.navigator.vibrate) window.navigator.vibrate([50, 30, 50]);
-
-        resultDiv.innerHTML = `
-            L'année était <b style="color:#ffcc00">${correctYear}</b><br>
-            Écart : ${diff} ans<br>
-            <span class="score-val">${score} PTS</span>
-        `;
+        document.getElementById('game-ui').style.display = 'none';
+        document.getElementById('result-ui').style.display = 'block';
         
-        controls.style.display = "none";
-        nextBtn.style.display = "inline-block";
+        let rank = "Pas mal !";
+        if (diff > 20) rank = "Ouch, un peu loin...";
+        if (diff <= 5) rank = "Expert !";
+        if (diff === 0) rank = "LÉGENDAIRE !";
+
+        document.getElementById('result-title').innerText = rank;
+        document.getElementById('result-info').innerHTML = `
+            L'année était : <b style="color:var(--primary)">${correctYear}</b><br>
+            Ton écart : ${diff} ans<br>
+            <br><span style="font-size:2em">${score} PTS</span>
+        `;
+
+        if (vibrateEnabled && window.navigator.vibrate) window.navigator.vibrate([50, 50, 50]);
     }
-
-    startGame();
 </script>
-
 </body>
 </html>
